@@ -1,13 +1,7 @@
-
-
 import os, sys
-
-
+import yaml
 
 from doorlockworker import DoorlockWorker
-
-
-# Inspired from https://www.cloudmqtt.com/docs/python.html
 
 server = os.environ.get('MQTT_SERVER', 'mqtt://localhost:1883')
 uname = os.environ.get('MQTT_USERNAME', None)
@@ -15,18 +9,16 @@ password = os.environ.get('MQTT_PASSWORD', None)
 client_id = os.environ.get('MQTT_CLIENT_ID', None)
 
 
-NUMBER_OF_DOORS = 2
-GPIO_actuator_startpin = 29
+def main():
 
-door_dict = {}
+    cfg = None
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(current_dir, "config.yaml")
+    with open(path, 'r') as stream:
+        cfg = yaml.load(stream, Loader=yaml.FullLoader)
+    print(cfg)
 
-
-def main(fake = False):
-
-    for i in range(1,NUMBER_OF_DOORS+1):
-        door_dict.update({str(i):{"topic_cmd":f'door/{i}/cmd', "gpio_actuator":GPIO_actuator_startpin+(i-1)*2}})
-
-    doorlockworker = DoorlockWorker(fake, client_id=client_id, num_doors=NUMBER_OF_DOORS, door_dict=door_dict)
+    doorlockworker = DoorlockWorker(client_id=client_id, config=cfg['doors'])
     doorlockworker.connect_to_broker(server, uname, password)
     doorlockworker.subscribe()
     rc = doorlockworker.run()
@@ -37,10 +29,7 @@ def main(fake = False):
 
 # Tests
 if __name__ == '__main__':
-    if 'fake' in sys.argv:
-        main(fake=True)
-    else:
-        main()
+    main()
 
 
 # ustates = States(36, 38, 40)

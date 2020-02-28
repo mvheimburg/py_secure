@@ -1,7 +1,8 @@
 # base-image for python on any machine using a template variable,
 # see more about dockerfile templates here: https://www.balena.io/docs/learn/develop/dockerfile/
-# FROM balenalib/raspberrypi3-python:3.7-latest
-FROM balenalib/raspberrypi3-python:3-build
+# FROM balenalib/raspberrypi3-python:3.7.6-latest
+# FROM balenalib/raspberrypi3-python:3-build
+FROM balenalib/raspberrypi3-python:3.7-build
 
 # use `install_packages` if you need to install dependencies,
 # for instance if you need git, just uncomment the line below.
@@ -9,9 +10,13 @@ FROM balenalib/raspberrypi3-python:3-build
 
 
 RUN python --version
+RUN apt update
+RUN apt upgrade
+RUN apt install apt-utils && \
+    apt install rpi.gpio && \
+    apt install python3-gpiozero
 
 ENV APP_DEV = /usr/src/app
-
 
 # Set our working directory
 WORKDIR "${APP_DEV}"

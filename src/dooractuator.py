@@ -1,59 +1,25 @@
+import gpiozero
 
-
-import threading
-import time
-
- #WirePI
-
-# GPIO.BCM
 
 class DoorActuator():
-    def __init__(self, fake, num_doors, door_dict):
-        """ Trigger actions by relays connected between the Hormann door and GPIOs of the Raspberry Pi.
-
-        The GPIO_door1 is the GPIO number of the board connected to a relay connected door1 strike
-        The GPIO_door2 is the GPIO number of the board connected to a relay connected door2 strike
-        The GPIO_door3 is the GPIO number of the board connected to a relay connected door3 strike
+    def __init__(self, config):
+        """ Trigger door-strike actions by relays
 
         """
-        if fake:
-            import sys
-            import fake_rpi
-            sys.modules['RPi'] = fake_rpi.RPi     # Fake RPi (GPIO)
-            sys.modules['smbus'] = fake_rpi.smbus # Fake smbus (I2C)
-        
-        else:
-            import RPi.GPIO as GPIO
 
-        self._num_doors = num_doors
-        self._door_dict = door_dict
+        self._config = config
 
-        GPIO.setwarnings(False)
-        # See https://sourceforge.net/p/raspberry-gpio-python/wiki/BasicUsage/
-        GPIO_MODE = GPIO.BOARD 
+        for door in self._config:
+            relay = gpiozero.OutputDevice(self._config[door]["bcd_pin_number"], active_high=False, initial_value=False)
+            self._config[door].update({"relay":relay})
+            
 
-        #GPIO Pin Setup
-        GPIO.setmode(GPIO_MODE)
+    def unlock_door(self, index):
+        print(f"Unlocking door {index}")
+        self._config[index]["relay"].off()
 
-        for i in range(1,self._num_doors):
-            GPIO.setup(self._door_dict[str(i)]["gpio_actuator"], GPIO.OUT, initial=GPIO.HIGH)
 
-    def open_door(self):
-        GPIO.output(pin, GPIO.HIGH)
+    def lock_door(self, index):
+        print(f"Locking door {index}")
+        self._config[index]["relay"].on()
 
-    def close_door(self):
-        GPIO.output(pin, GPIO.LOW)
-
-    def open_door(self, index):
-        if index > self._num_doors:
-            #TODO: Raise error
-            pass
-        else:
-            self.open_door(self._door_dict[str(index)]["gpio_actuator"])
-
-    def close_door1(self, index):
-        if index > self._num_doors:
-            #TODO: Raise error
-            pass
-        else:
-            self.close_door(self._door_dict[str(index)]["gpio_actuator"])
